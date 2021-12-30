@@ -7,53 +7,30 @@ use App\Utilities\FormValidateion;
 
 class Weather
 {
+
     private $weather ;
 
-    private $fullDate;
-
-    private $dayName;
-
-    private $icon;
-
-    private $weatherData = [];
-
-    private $weeklyWeather = [];
 
     public function __construct()
     {
         $this->weather = new WeatherAPI();
     }
 
-    public function setDate()
-    {
-        $this->fullDate = date('Y M d');
-        
-        $this->dayName = date('l');
-
-    }
-
-    public function getDate()
-    {
-        $this->setDate();
-
-        return ['day'=>$this->dayName , 'fullDate'=>$this->fullDate];
-    }
-
     public function getCurrentWeather(string $city )
     {
 
-        $this->weatherData = json_decode($this->weather->getCityWeather($city));
+        $weatherData = json_decode($this->weather->getCityWeather($city));
         
-        $this->setIcon();
+        $icon = $this->setIcon($weatherData->weather[0]->main);
 
         $retenedData = [
-            'tempData' => $this->weatherData->main ,
-            'windSpeed' => intval($this->weatherData->wind->speed * 3.6) ,
-            'cloud' => $this->weatherData->clouds->all,
-            'country' => $this->weatherData->sys->country,
-            'city' =>$this->weatherData->name ,
-            'dis' => $this->weatherData->weather[0]->main,
-            'icon' => $this->icon
+            'tempData' => $weatherData->main ,
+            'windSpeed' => intval($weatherData->wind->speed * 3.6) ,
+            'cloud' => $weatherData->clouds->all,
+            'country' => $weatherData->sys->country,
+            'city' => $weatherData->name ,
+            'dis' => $weatherData->weather[0]->main,
+            'icon' => $icon
         ];
         
         return $retenedData;
@@ -61,26 +38,40 @@ class Weather
 
     public function get4DayWeather(string $city)
     {
-        $this->weeklyWeather = json_decode($this->weather->getWeeklyWeather($city));
+        $returnedData = [];
 
+        $weeklyWeather = $this->weather->getWeeklyWeather($city);
+
+        for ($i=1; $i < 5; $i++) { 
+
+            $icon = $this->setIcon($weeklyWeather[$i]->weather[0]->main);
+
+            $retenedData[$i] = [
+                'temp' => $weeklyWeather[$i]->temp->day ,
+                'dayName' => date('D' , $weeklyWeather[$i]->dt) ,
+                'icon' => $icon
+            ];
+        }
+        
+        return $retenedData;
     }
 
-    public function setIcon()
+    public function setIcon(string $status)
     {
-        $iconDis = $this->weatherData->weather[0]->main;
         
-        if ($iconDis == 'Clouds')
-            $this->icon = 'cloud';
+        if ($status == 'Clouds')
+            $icon = 'cloud';
 
-        if ($iconDis == 'Rain')
-            $this->icon = 'cloud-rain';
+        if ($status == 'Rain')
+            $icon = 'cloud-rain';
 
-        if ($iconDis == 'Rain')
-            $this->icon = 'cloud-snow';
+        if ($status == 'Snow')
+            $icon = 'cloud-snow';
 
-        if ($iconDis == 'Clear')
-            $this->icon = 'sun';
+        if ($status == 'Clear')
+            $icon = 'sun';
         
+            return $icon;
     }
 
 }

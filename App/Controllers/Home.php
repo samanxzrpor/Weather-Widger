@@ -4,29 +4,31 @@ namespace App\Controllers;
 use App\Controllers\Weather;
 use App\Utilities\FormValidateion;
 use App\Utilities\XSSClean;
+use App\Utilities\Date;
 use App\Models\City;
 
 
 class Home
 {
+    private $city = 'Tehran';
+
 
     public function index(array $getParams = [])
     {
-        $city = 'piranshahr';
         $weather = new Weather();
 
         if (isset($_POST['location']))
-            $city = FormValidateion::validatePostString($_POST['location']);
+            $this->city = FormValidateion::validatePostString($_POST['location']);
 
         if (isset($getParams) && !empty($getParams))
-            $city = XSSClean::xss_clean($getParams['loc']);
+            $this->city = XSSClean::xss_clean($getParams['loc']);
         
-        // $weatherData = $weather->get4DayWeather($city);
+        $dailyWeather = $weather->get4DayWeather($this->city);
+        $weatherData = $weather->getCurrentWeather($this->city);
+
+        $date = Date::getDate();
         
-        $weatherData = $weather->getCurrentWeather($city);
-        $date = $weather->getDate();
-        
-        loadView('index' , ['weatherData' => $weatherData , 'date' => $date]);
+        loadView('index' , ['weatherData' => $weatherData , 'date' => $date , 'dailyWeather' =>$dailyWeather]);
     }
 
 
